@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+	<meta charset="UTF-8">
+    </head>
+    <body>
+	<canvas id="game-canvas" width="800" height="600"></canvas>
+	<script>
+	 var canvas;
+	 var canvasContext;
+	 var ballX = 75;
+	 var ballY = 75;
+	 var ballSpeedX = 10;
+	 var ballSpeedY = 5;
+
+	 const paddleWidth = 100;
+	 const paddleThickness = 10;
+	 const paddleDistFromEdge = 60;
+	 var paddleX = 400;
+
+	 const brickWidth = 100;
+	 const brickHeight = 50;
+	 const brickCount = 8;
+	 //var brickGrid = [true, false, true, true];
+	 var brickGrid = new Array(brickCount);
+
+	 var mouseX = 0;
+	 var mouseY = 0;
+	 
+	 window.onload = function() {
+	     canvas = document.getElementById("game-canvas");
+	     canvasContext = canvas.getContext("2d");
+
+	     var framesPerSecond = 30;
+	     setInterval(updateAll, 1000/framesPerSecond);
+
+	     canvas.addEventListener("mousemove", updateMousePos);
+
+	     resetBricks();
+	 }
+
+	 function updateMousePos(evt) {
+	     var rect = canvas.getBoundingClientRect();
+	     var root = document.documentElement;
+	     
+	     mouseX = evt.clientX - rect.left - root.scrollLeft;
+	     mouseY = evt.clientY - rect.top - root.scrollTop;
+
+	     paddleX = mouseX - paddleWidth/2;
+	 }
+
+	 function updateAll() {
+	     moveAll();
+	     drawAll();
+	 }
+
+	 function moveAll() {
+	     ballX += ballSpeedX;
+	     ballY += ballSpeedY;
+	     if (ballX < 0) {
+		 ballSpeedX = -ballSpeedX;
+	     } else if (ballX > canvas.width) {
+		 ballSpeedX = -ballSpeedX;
+	     }
+	     if (ballY < 0) {
+		 ballSpeedY = -ballSpeedY;
+	     } else if (ballY > canvas.height) {
+		 //ballSpeedY = -ballSpeedY;
+		 resetBall();
+	     }
+
+	     var paddleTopEdge = canvas.height - paddleDistFromEdge;
+	     var paddleBottomEdge = paddleTopEdge + paddleThickness;
+	     var paddleLeftEdge = paddleX;
+	     var paddleRightEdge = paddleLeftEdge + paddleWidth;
+
+	     if ( (ballY > paddleTopEdge) &&
+		  (ballY < paddleBottomEdge) &&
+		  (ballX > paddleLeftEdge) &&
+		  (ballX < paddleRightEdge) ) {
+		 
+		 ballSpeedY = - ballSpeedY;
+
+		 var centerOfPaddle = paddleX + paddleWidth/2;
+		 var ballDistFromCenter = ballX - centerOfPaddle;
+		 ballSpeedX = ballDistFromCenter * 0.35;
+	     }
+	 }
+
+	 function resetBall() {
+	     ballX = canvas.width/2;
+	     ballY = canvas.height/2;
+	 }
+
+	 function drawAll() {
+	     // clear screen
+	     colorRect(0, 0, canvas.width, canvas.height, "black");
+
+	     // draw ball
+	     colorCircle(ballX, ballY, 10, "white");
+
+	     // draw paddle
+	     colorRect(paddleX, canvas.height - paddleDistFromEdge, paddleWidth, paddleThickness, "white");
+
+	     // draw bricks
+	     drawBricks();
+	     
+	     colorText(mouseX + "," + mouseY, mouseX, mouseY, "yellow");
+	 }
+
+	 function resetBricks() {
+	     for(var i=0; i<brickCount; i++) {
+		 brickGrid[i] = Math.random() < 0.5 ? true : false;
+	     }
+	 }
+
+	 function drawBricks() {
+	     for(var i=0; i<brickCount; i++) {
+		 if ( brickGrid[i] ) {
+		     colorRect(brickWidth*i, 0, brickWidth-2, brickHeight, "blue");
+		 }
+	     }
+	 }
+	 
+	 function colorRect(left, top, width, height, color) {
+	     canvasContext.fillStyle = color;
+	     canvasContext.fillRect(left, top, width, height);
+	 }
+
+	 function colorCircle(x, y, radius, color) {
+	     canvasContext.fillStyle = color;
+	     canvasContext.beginPath();
+	     canvasContext.arc(x, y, radius, 0, Math.PI*2, true);
+	     canvasContext.fill();
+	 }
+
+	 function colorText(text, x, y, color) {
+	     canvasContext.fillStyle = color;
+	     canvasContext.fillText(text, x, y);
+	 }
+	</script>
+    </body>
+</html>
