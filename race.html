@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+	<meta charset="UTF-8">
+    </head>
+    <body>
+	<canvas id="game-canvas" width="800" height="600"></canvas>
+	<script>
+	 var canvas;
+	 var canvasContext;
+	 var ballX = 75;
+	 var ballY = 75;
+	 var ballSpeedX = 10;
+	 var ballSpeedY = 5;
+
+	 const trackWidth = 40;
+	 const trackHeight = 40;
+	 const trackGap = 2;
+	 const trackColumns = 20;
+	 const trackRows = 15;
+	 //var trackGrid = [true, false, true, true];
+	 //var trackGrid = new Array(trackColumns*trackRows);
+	 //               1  2  3  4  5  6  7  8  9  0  1  2  3  4  5  6  7  8  9  0  
+	 var trackGrid = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			  1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,
+			  1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+			  1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1,
+			  1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1,
+			  1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1,
+			  1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1,
+			  1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
+			  1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
+			  1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
+			  1, 0, 2, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1,
+			  1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1,
+			  1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1,
+			  1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1,
+			  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+
+	 var mouseX = 0;
+	 var mouseY = 0;
+	 
+	 window.onload = function() {
+	     canvas = document.getElementById("game-canvas");
+	     canvasContext = canvas.getContext("2d");
+
+	     var framesPerSecond = 30;
+	     setInterval(updateAll, 1000/framesPerSecond);
+
+	     canvas.addEventListener("mousemove", updateMousePos);
+
+	     ballReset();
+	 }
+
+	 function updateMousePos(evt) {
+	     var rect = canvas.getBoundingClientRect();
+	     var root = document.documentElement;
+	     
+	     mouseX = evt.clientX - rect.left - root.scrollLeft;
+	     mouseY = evt.clientY - rect.top - root.scrollTop;
+
+	 }
+
+	 function updateAll() {
+	     moveAll();
+	     drawAll();
+	 }
+
+	 function moveAll() {
+	     ballMove();
+	     ballTrackHandling();
+	 }
+
+	 function ballMove() {
+	     ballX += ballSpeedX;
+	     ballY += ballSpeedY;
+	     if ((ballX < 0) && (ballSpeedX < 0.0)) {
+		 ballSpeedX = -ballSpeedX;
+	     } else if ((ballX > canvas.width) && (ballSpeedX > 0.0)) {
+		 ballSpeedX = -ballSpeedX;
+	     }
+	     if ((ballY < 0) && (ballSpeedY < 0.0)) {
+		 ballSpeedY = -ballSpeedY;
+	     } else if (ballY > canvas.height) {
+		 //ballSpeedY = -ballSpeedY;
+		 ballReset();
+	     }
+	 }
+
+	 function ballTrackHandling() {
+	     var ballTrackCol = Math.floor(ballX / trackWidth);
+	     var ballTrackRow = Math.floor(ballY / trackHeight);
+	     var trackIndexUnderBall = rowColToArrayIndex(ballTrackCol, ballTrackRow);
+	     //if ( (trackIndexUnderBall >= 0) &&
+	     //	  (trackIndexUnderBall < trackColumns * trackRows) ) {
+	     if ((ballTrackCol >= 0) &&
+		 (ballTrackCol < trackColumns) &&
+		 (ballTrackRow >= 0) &&
+		 (ballTrackRow < trackRows)) {
+		 if (isTrackAtColRow(ballTrackCol, ballTrackRow)) {
+
+		     var prevBallX = ballX - ballSpeedX;
+		     var prevBallY = ballY - ballSpeedY;
+		     var prevTrackCol = Math.floor(prevBallX / trackWidth);
+		     var prevTrackRow = Math.floor(prevBallY / trackHeight);
+
+		     var bothTestsFailed = true;
+		     
+		     if (prevTrackCol != ballTrackCol) {
+			 if ( !isTrackAtColRow(prevTrackCol, ballTrackRow) ) {
+			     ballSpeedX *= -1;
+			     bothTestsFailed = false;
+			 }
+		     }
+
+		     if (prevTrackRow != ballTrackRow) {
+			 if ( !isTrackAtColRow(ballTrackCol, prevTrackRow) ) {
+			     ballSpeedY *= -1;
+			     bothTestsFailed = false;
+			 }
+		     }
+
+		     if (bothTestsFailed) { //armpit
+			 ballSpeedX *= -1;
+			 ballSpeedY *= -1;
+		     }
+		 }
+	     }
+	 }
+
+	 function ballReset() {
+	     for(var j=0; j<trackRows; j++) {
+		 for(var i=0; i<trackColumns; i++) {
+		     var idx = rowColToArrayIndex(i, j);
+		     if ( trackGrid[idx] == 2 ) {
+			 trackGrid[idx] = 0;
+			 ballX = (i * trackWidth) + (trackWidth / 2);
+			 ballY = (j * trackHeight) + (trackHeight / 2);
+		     }
+		 }
+	     }
+	 }
+
+	 function drawAll() {
+	     // clear screen
+	     colorRect(0, 0, canvas.width, canvas.height, "black");
+	     
+	     // draw ball
+	     colorCircle(ballX, ballY, 10, "white");
+	     
+	     // draw tracks
+	     drawTracks();
+	     
+	     //colorText(mouseX + "," + mouseY, mouseX, mouseY, "yellow");
+	     var mouseTrackCol = Math.floor(mouseX / trackWidth);
+	     var mouseTrackRow = Math.floor(mouseY / trackHeight);
+	     var trackIndexUnderMouse = rowColToArrayIndex(mouseTrackCol, mouseTrackRow);
+	     colorText(mouseTrackCol + "," + mouseTrackRow + ":" + trackIndexUnderMouse, mouseX, mouseY, "yellow");
+	 }
+
+	 function drawTracks() {
+	     for(var j=0; j<trackRows; j++) {
+		 for(var i=0; i<trackColumns; i++) {
+		     var idx = rowColToArrayIndex(i, j);
+		     if ( trackGrid[idx] == 1 ) {
+			 colorRect(trackWidth*i, trackHeight*j, trackWidth-trackGap, trackHeight-trackGap, "blue");
+		     }
+		 }
+	     }
+	 }
+
+	 function isTrackAtColRow(col, row) {
+	     if ((col >= 0) &&
+		 (col < trackColumns) &&
+		 (row >= 0) &&
+		 (row < trackRows)) {
+		 var trackIndexUnderCoord = rowColToArrayIndex(col, row);
+		 return trackGrid[trackIndexUnderCoord] == 1;
+	     } else {
+		 return false;
+	     }
+	 }
+	 
+	 function rowColToArrayIndex(col, row) {
+	     return trackColumns * row + col;
+	 }
+	 
+	 function colorRect(left, top, width, height, color) {
+	     canvasContext.fillStyle = color;
+	     canvasContext.fillRect(left, top, width, height);
+	 }
+
+	 function colorCircle(x, y, radius, color) {
+	     canvasContext.fillStyle = color;
+	     canvasContext.beginPath();
+	     canvasContext.arc(x, y, radius, 0, Math.PI*2, true);
+	     canvasContext.fill();
+	 }
+
+	 function colorText(text, x, y, color) {
+	     canvasContext.fillStyle = color;
+	     canvasContext.fillText(text, x, y);
+	 }
+	</script>
+    </body>
+</html>
