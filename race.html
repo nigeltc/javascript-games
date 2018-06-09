@@ -15,7 +15,7 @@
 	 var carX = 75;
 	 var carY = 75;
 	 var carAng = 0;
-	 var carSpeed = 2
+	 var carSpeed = 0;
 
 	 const trackWidth = 40;
 	 const trackHeight = 40;
@@ -43,6 +43,16 @@
 
 	 var mouseX = 0;
 	 var mouseY = 0;
+
+	 const KEY_LEFT = 37;
+	 const KEY_UP = 38;
+	 const KEY_RIGHT = 39;
+	 const KEY_DOWN = 40;
+
+	 var keyHeldGas = false;
+	 var keyHeldReverse = false;
+	 var keyHeldTurnLeft = false;
+	 var keyHeldTurnRight = false; 
 	 
 	 window.onload = function() {
 	     canvas = document.getElementById("game-canvas");
@@ -53,12 +63,61 @@
 
 	     canvas.addEventListener("mousemove", updateMousePos);
 
+	     document.addEventListener("keydown", keyPressed);
+	     document.addEventListener("keyup", keyReleased);
+	     
 	     carPic.onload = function() {
 		 carPicLoaded = true;
 	     };
 	     carPic.src = "player1car.png";
 	     
 	     carReset();
+	 }
+
+	 function keyPressed(evt) {
+	     //console.log("key pressed: " + evt.keyCode);
+	     if (evt.keyCode == KEY_LEFT) {
+		 keyHeldTurnLeft = true;
+		 //carAng -= 0.5;
+	     }
+
+	     if (evt.keyCode == KEY_RIGHT) {
+		 keyHeldTurnRight = true;
+		 //carAng += 0.5;
+	     }
+
+	     if (evt.keyCode == KEY_UP) {
+		 keyHeldGas = true;
+		 //carSpeed += 0.5;
+	     }
+
+	     if (evt.keyCode == KEY_DOWN) {
+		 keyHeldReverse = true;
+		 //carSpeed -= 0.5;
+	     }
+
+	     evt.preventDefault();
+	 }
+
+	 function keyReleased(evt) {
+	     //console.log("key released: " + evt.keyCode);
+	     if (evt.keyCode == KEY_LEFT) {
+		 keyHeldTurnLeft = false;
+	     }
+
+	     if (evt.keyCode == KEY_RIGHT) {
+		 keyHeldTurnRight = false;
+	     }
+
+	     if (evt.keyCode == KEY_UP) {
+		 keyHeldGas = false;
+	     }
+
+	     if (evt.keyCode == KEY_DOWN) {
+		 keyHeldReverse = false;
+	     }
+
+	     evt.preventDefault();
 	 }
 
 	 function updateMousePos(evt) {
@@ -81,9 +140,23 @@
 	 }
 
 	 function carMove() {
+	     carSpeed *= 0.97;
+	     
+	     if (keyHeldGas ) {
+		 carSpeed += 0.3;
+	     }
+	     if (keyHeldReverse ) {
+		 carSpeed -= 0.3;
+	     }
+	     if (keyHeldTurnRight ) {
+		 carAng += 0.04;
+	     }
+	     if (keyHeldTurnLeft ) {
+		 carAng -= 0.04;
+	     }
+	     
 	     carX += Math.cos(carAng) * carSpeed;
 	     carY += Math.sin(carAng) * carSpeed;
-	     carAng += 0.02;
 	 }
 
 	 function carTrackHandling() {
@@ -97,7 +170,10 @@
 		 (carTrackRow >= 0) &&
 		 (carTrackRow < trackRows)) {
 		 if (isTrackAtColRow(carTrackCol, carTrackRow)) {
-		     carSpeed *= -1;
+		     // lose speed on collision with wall
+		     carX -= Math.cos(carAng) * carSpeed;
+		     carY -= Math.sin(carAng) * carSpeed;
+		     carSpeed *= -0.5;
 		 }
 	     }
 	 }
@@ -108,6 +184,7 @@
 		     var idx = rowColToArrayIndex(i, j);
 		     if ( trackGrid[idx] == 2 ) {
 			 trackGrid[idx] = 0;
+			 carAng = - Math.PI/2;
 			 carX = (i * trackWidth) + (trackWidth / 2);
 			 carY = (j * trackHeight) + (trackHeight / 2);
 		     }
