@@ -1,3 +1,7 @@
+var roadPic = document.createElement("img");
+var wallPic = document.createElement("img");
+
+
 const trackWidth = 40;
 const trackHeight = 40;
 const trackGap = 2;
@@ -26,6 +30,11 @@ const TRACK_ROAD = 0;
 const TRACK_WALL = 1;
 const TRACK_PLAYER_START = 2;
 
+function trackLoadImages() {
+    roadPic.src = "track_road.png";
+    wallPic.src = "track_wall.png";
+}
+
 function isWallAtColRow(col, row) {
     if ((col >= 0) &&
 	(col < trackColumns) &&
@@ -43,7 +52,10 @@ function drawTracks() {
 	for(var i=0; i<trackColumns; i++) {
 	    var idx = rowColToArrayIndex(i, j);
 	    if ( trackGrid[idx] == TRACK_WALL ) {
-		colorRect(trackWidth*i, trackHeight*j, trackWidth-trackGap, trackHeight-trackGap, "blue");
+		canvasContext.drawImage(wallPic, trackWidth*i, trackHeight*j);
+		//colorRect(trackWidth*i, trackHeight*j, trackWidth-trackGap, trackHeight-trackGap, "blue");
+	    } else if ( trackGrid[idx] == TRACK_ROAD ) {
+		canvasContext.drawImage(roadPic, trackWidth*i, trackHeight*j);
 	    }
 	}
     }

@@ -11,6 +11,7 @@ window.onload = function() {
 
     setupInput();
 
+    trackLoadImages();
     carImageLoad();
     carReset();
 }
@@ -26,9 +27,9 @@ function moveAll() {
 }
 
 function drawAll() {
-    clearScreen();
-    carDraw();
+    //clearScreen();
     drawTracks();
+    carDraw();
     
     //colorText(mouseX + "," + mouseY, mouseX, mouseY, "yellow");
     var mouseTrackCol = Math.floor(mouseX / trackWidth);
