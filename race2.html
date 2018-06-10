@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+	<meta charset="UTF-8">
+    </head>
+    <body>
+	<canvas id="game-canvas" width="800" height="600"></canvas>
+	<script>
+	 var canvas;
+	 var canvasContext;
+
+	 var carPic = document.createElement("img");
+	 var carPicLoaded = false;
+	 
+	 var carX = 75;
+	 var carY = 75;
+	 var carAng = 0;
+	 var carSpeed = 0;
+
+	 const groundSpeedDecayMult = 0.94;
+	 const drivePower = 0.5;
+	 const reversePower = 0.2;
+	 const turnRate = 0.03;
+	 
+	 const trackWidth = 40;
+	 const trackHeight = 40;
+	 const trackGap = 2;
+	 const trackColumns = 20;
+	 const trackRows = 15;
+	 //var trackGrid = [true, false, true, true];
+	 //var trackGrid = new Array(trackColumns*trackRows);
+	 //               1  2  3  4  5  6  7  8  9  0  1  2  3  4  5  6  7  8  9  0  
+	 var trackGrid = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			  1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,
+			  1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+			  1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1,
+			  1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1,
+			  1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1,
+			  1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1,
+			  1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
+			  1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
+			  1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
+			  1, 0, 2, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1,
+			  1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1,
+			  1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1,
+			  1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1,
+			  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+
+	 const TRACK_ROAD = 0;
+	 const TRACK_WALL = 1;
+	 const TRACK_PLAYER_START = 2;
+	 
+	 var mouseX = 0;
+	 var mouseY = 0;
+
+	 const KEY_LEFT = 37;
+	 const KEY_UP = 38;
+	 const KEY_RIGHT = 39;
+	 const KEY_DOWN = 40;
+
+	 var keyHeldGas = false;
+	 var keyHeldReverse = false;
+	 var keyHeldTurnLeft = false;
+	 var keyHeldTurnRight = false; 
+	 
+	 window.onload = function() {
+	     canvas = document.getElementById("game-canvas");
+	     canvasContext = canvas.getContext("2d");
+
+	     var framesPerSecond = 30;
+	     setInterval(updateAll, 1000/framesPerSecond);
+
+	     canvas.addEventListener("mousemove", updateMousePos);
+
+	     document.addEventListener("keydown", keyPressed);
+	     document.addEventListener("keyup", keyReleased);
+	     
+	     carPic.onload = function() {
+		 carPicLoaded = true;
+	     };
+	     carPic.src = "player1car.png";
+	     
+	     carReset();
+	 }
+
+	 function keyPressed(evt) {
+	     //console.log("key pressed: " + evt.keyCode);
+	     if (evt.keyCode == KEY_LEFT) {
+		 keyHeldTurnLeft = true;
+		 //carAng -= 0.5;
+	     }
+
+	     if (evt.keyCode == KEY_RIGHT) {
+		 keyHeldTurnRight = true;
+		 //carAng += 0.5;
+	     }
+
+	     if (evt.keyCode == KEY_UP) {
+		 keyHeldGas = true;
+		 //carSpeed += 0.5;
+	     }
+
+	     if (evt.keyCode == KEY_DOWN) {
+		 keyHeldReverse = true;
+		 //carSpeed -= 0.5;
+	     }
+
+	     evt.preventDefault();
+	 }
+
+	 function keyReleased(evt) {
+	     //console.log("key released: " + evt.keyCode);
+	     if (evt.keyCode == KEY_LEFT) {
+		 keyHeldTurnLeft = false;
+	     }
+
+	     if (evt.keyCode == KEY_RIGHT) {
+		 keyHeldTurnRight = false;
+	     }
+
+	     if (evt.keyCode == KEY_UP) {
+		 keyHeldGas = false;
+	     }
+
+	     if (evt.keyCode == KEY_DOWN) {
+		 keyHeldReverse = false;
+	     }
+
+	     evt.preventDefault();
+	 }
+
+	 function updateMousePos(evt) {
+	     var rect = canvas.getBoundingClientRect();
+	     var root = document.documentElement;
+	     
+	     mouseX = evt.clientX - rect.left - root.scrollLeft;
+	     mouseY = evt.clientY - rect.top - root.scrollTop;
+
+	 }
+
+	 function updateAll() {
+	     moveAll();
+	     drawAll();
+	 }
+
+	 function moveAll() {
+	     carMove();
+	     carTrackHandling();
+	 }
+
+	 function carMove() {
+	     carSpeed *= groundSpeedDecayMult;
+	     
+	     if (keyHeldGas ) {
+		 carSpeed += drivePower;
+	     }
+	     if (keyHeldReverse ) {
+		 carSpeed -= reversePower;
+	     }
+	     if (keyHeldTurnRight ) {
+		 carAng += turnRate;
+	     }
+	     if (keyHeldTurnLeft ) {
+		 carAng -= turnRate;
+	     }
+	     
+	     carX += Math.cos(carAng) * carSpeed;
+	     carY += Math.sin(carAng) * carSpeed;
+	 }
+
+	 function carTrackHandling() {
+	     var carTrackCol = Math.floor(carX / trackWidth);
+	     var carTrackRow = Math.floor(carY / trackHeight);
+	     var trackIndexUnderCar = rowColToArrayIndex(carTrackCol, carTrackRow);
+	     //if ( (trackIndexUnderCar >= 0) &&
+	     //	  (trackIndexUnderCar < trackColumns * trackRows) ) {
+	     if ((carTrackCol >= 0) &&
+		 (carTrackCol < trackColumns) &&
+		 (carTrackRow >= 0) &&
+		 (carTrackRow < trackRows)) {
+		 if (isWallAtColRow(carTrackCol, carTrackRow)) {
+		     // lose speed on collision with wall
+		     carX -= Math.cos(carAng) * carSpeed;
+		     carY -= Math.sin(carAng) * carSpeed;
+		     carSpeed *= -0.5;
+		 }
+	     }
+	 }
+
+	 function carReset() {
+	     for(var j=0; j<trackRows; j++) {
+		 for(var i=0; i<trackColumns; i++) {
+		     var idx = rowColToArrayIndex(i, j);
+		     if ( trackGrid[idx] == TRACK_PLAYER_START ) {
+			 trackGrid[idx] = TRACK_ROAD;
+			 carAng = - Math.PI/2;
+			 carX = (i * trackWidth) + (trackWidth / 2);
+			 carY = (j * trackHeight) + (trackHeight / 2);
+		     }
+		 }
+	     }
+	 }
+
+	 function drawAll() {
+	     // clear screen
+	     colorRect(0, 0, canvas.width, canvas.height, "black");
+	     
+	     // draw car
+	     //colorCircle(carX, carY, 10, "white");
+
+	     if (carPicLoaded) {
+		 drawBitmapCenteredWithRotation( carPic, carX, carY, carAng);
+	     }
+	     
+	     // draw tracks
+	     drawTracks();
+	     
+	     //colorText(mouseX + "," + mouseY, mouseX, mouseY, "yellow");
+	     var mouseTrackCol = Math.floor(mouseX / trackWidth);
+	     var mouseTrackRow = Math.floor(mouseY / trackHeight);
+	     var trackIndexUnderMouse = rowColToArrayIndex(mouseTrackCol, mouseTrackRow);
+	     colorText(mouseTrackCol + "," + mouseTrackRow + ":" + trackIndexUnderMouse, mouseX, mouseY, "yellow");
+	 }
+
+	 function drawTracks() {
+	     for(var j=0; j<trackRows; j++) {
+		 for(var i=0; i<trackColumns; i++) {
+		     var idx = rowColToArrayIndex(i, j);
+		     if ( trackGrid[idx] == TRACK_WALL ) {
+			 colorRect(trackWidth*i, trackHeight*j, trackWidth-trackGap, trackHeight-trackGap, "blue");
+		     }
+		 }
+	     }
+	 }
+
+	 function isWallAtColRow(col, row) {
+	     if ((col >= 0) &&
+		 (col < trackColumns) &&
+		 (row >= 0) &&
+		 (row < trackRows)) {
+		 var trackIndexUnderCoord = rowColToArrayIndex(col, row);
+		 return trackGrid[trackIndexUnderCoord] == TRACK_WALL;
+	     } else {
+		 return false;
+	     }
+	 }
+	 
+	 function rowColToArrayIndex(col, row) {
+	     return trackColumns * row + col;
+	 }
+
+	 function drawBitmapCenteredWithRotation(bitmap, x, y, ang) {
+	     canvasContext.save();
+	     canvasContext.translate(x, y);
+	     canvasContext.rotate(carAng);
+	     canvasContext.drawImage(bitmap, -bitmap.width/2, -bitmap.height/2);
+	     canvasContext.restore();
+	 }
+	 
+	 function colorRect(left, top, width, height, color) {
+	     canvasContext.fillStyle = color;
+	     canvasContext.fillRect(left, top, width, height);
+	 }
+
+	 function colorCircle(x, y, radius, color) {
+	     canvasContext.fillStyle = color;
+	     canvasContext.beginPath();
+	     canvasContext.arc(x, y, radius, 0, Math.PI*2, true);
+	     canvasContext.fill();
+	 }
+
+	 function colorText(text, x, y, color) {
+	     canvasContext.fillStyle = color;
+	     canvasContext.fillText(text, x, y);
+	 }
+	</script>
+    </body>
+</html>
