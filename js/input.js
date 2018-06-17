@@ -6,61 +6,43 @@ const KEY_UP = 38;
 const KEY_RIGHT = 39;
 const KEY_DOWN = 40;
 
-var keyHeldGas = false;
-var keyHeldReverse = false;
-var keyHeldTurnLeft = false;
-var keyHeldTurnRight = false; 
+const KEY_W = 87;
+const KEY_A = 65;
+const KEY_S = 83;
+const KEY_D = 68;
 
-function setupInput() {
-    canvas.addEventListener("mousemove", updateMousePos);
-    document.addEventListener("keydown", keyPressed);
-    document.addEventListener("keyup", keyReleased);
+function keySet(evt, whichCar, setTo) {
+    if (evt.keyCode == whichCar.controlKeyLeft) {
+	whichCar.keyHeldTurnLeft = setTo;
+    }
+
+    if (evt.keyCode == whichCar.controlKeyRight) {
+	whichCar.keyHeldTurnRight = setTo;
+    }
+
+    if (evt.keyCode == whichCar.controlKeyUp) {
+	whichCar.keyHeldGas = setTo;
+    }
+
+    if (evt.keyCode == whichCar.controlKeyDown) {
+	whichCar.keyHeldReverse = setTo;
+    }
+
+    //evt.preventDefault();
 }
 
 function keyPressed(evt) {
     //console.log("key pressed: " + evt.keyCode);
-    if (evt.keyCode == KEY_LEFT) {
-	keyHeldTurnLeft = true;
-	//carAng -= 0.5;
-    }
-
-    if (evt.keyCode == KEY_RIGHT) {
-	keyHeldTurnRight = true;
-	//carAng += 0.5;
-    }
-
-    if (evt.keyCode == KEY_UP) {
-	keyHeldGas = true;
-	//carSpeed += 0.5;
-    }
-
-    if (evt.keyCode == KEY_DOWN) {
-	keyHeldReverse = true;
-	//carSpeed -= 0.5;
-    }
-
-    evt.preventDefault();
+    keySet(evt, blueCar, true);
+    keySet(evt, greenCar, true);
+    //evt.preventDefault();
 }
 
 function keyReleased(evt) {
     //console.log("key released: " + evt.keyCode);
-    if (evt.keyCode == KEY_LEFT) {
-	keyHeldTurnLeft = false;
-    }
-
-    if (evt.keyCode == KEY_RIGHT) {
-	keyHeldTurnRight = false;
-    }
-
-    if (evt.keyCode == KEY_UP) {
-	keyHeldGas = false;
-    }
-
-    if (evt.keyCode == KEY_DOWN) {
-	keyHeldReverse = false;
-    }
-
-    evt.preventDefault();
+    keySet(evt, blueCar, false);
+    keySet(evt, greenCar, false);
+    //evt.preventDefault();
 }
 
 function updateMousePos(evt) {
@@ -70,5 +52,16 @@ function updateMousePos(evt) {
     mouseX = evt.clientX - rect.left - root.scrollLeft;
     mouseY = evt.clientY - rect.top - root.scrollTop;
 
+    //console.log("("+mouseX+","+mouseY+")");
+}
+
+function setupInput() {
+    console.log("setupInput()");
+    canvas.addEventListener("mousemove", updateMousePos);
+    document.addEventListener("keydown", keyPressed);
+    document.addEventListener("keyup", keyReleased);
+
+    greenCar.setupInput(KEY_W, KEY_D, KEY_S, KEY_A);
+    blueCar.setupInput(KEY_UP, KEY_RIGHT, KEY_DOWN, KEY_LEFT);
 }
 

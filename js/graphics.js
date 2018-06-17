@@ -7,7 +7,7 @@ function clearScreen() {
 function drawBitmapCenteredWithRotation(bitmap, x, y, ang) {
     canvasContext.save();
     canvasContext.translate(x, y);
-    canvasContext.rotate(carAng);
+    canvasContext.rotate(ang);
     canvasContext.drawImage(bitmap, -bitmap.width/2, -bitmap.height/2);
     canvasContext.restore();
 }

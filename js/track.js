@@ -18,7 +18,7 @@ var trackGrid = [4, 4, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4,
 		 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 5, 0, 0, 1, 0, 0, 1,
 		 1, 0, 0, 1, 0, 0, 5, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
 		 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 5, 0, 0, 1, 0, 0, 1, 0, 0, 1,
-		 1, 0, 2, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 5, 0, 0, 1,
+		 1, 2, 2, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 5, 0, 0, 1,
 		 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1,
 		 0, 3, 0, 0, 0, 0, 1, 4, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1,
 		 0, 3, 0, 0, 0, 0, 1, 4, 4, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1,
@@ -44,35 +44,19 @@ function isObstacleAtColRow(col, row) {
 }
 
 function drawTracks() {
+    var arrayIndex = 0;
+    var drawTileX = 0;
+    var drawTileY = 0;
     for(var j=0; j<trackRows; j++) {
 	for(var i=0; i<trackColumns; i++) {
-	    var idx = rowColToArrayIndex(i, j);
-	    var tileKindHere = trackGrid[idx];
-	    var useImg;
-	    switch(tileKindHere) {
-	    case TRACK_WALL:
-		useImg = wallPic;
-		break;
-		
-	    case TRACK_ROAD:
-		useImg = roadPic;
-		break;
-		
-	    case TRACK_GOAL:
-		useImg = goalPic;
-		break;
-		
-	    case TRACK_TREE:
-		useImg = treePic;
-		break;
-		
-	    case TRACK_FLAG:
-		useImg = flagPic;
-		break;
-		
-	    }
-	    canvasContext.drawImage(useImg, trackWidth*i, trackHeight*j);
+	    var tileKindHere = trackGrid[arrayIndex];
+	    var useImg = trackPics[tileKindHere];
+	    canvasContext.drawImage(useImg, drawTileX, drawTileY);
+	    drawTileX += trackWidth;
+	    arrayIndex++;
 	}
+	drawTileY += trackHeight;
+	drawTileX = 0;
     }
 }
 
@@ -80,21 +64,19 @@ function rowColToArrayIndex(col, row) {
     return trackColumns * row + col;
 }
 
-function carTrackHandling() {
-    var carTrackCol = Math.floor(carX / trackWidth);
-    var carTrackRow = Math.floor(carY / trackHeight);
+function carTrackHandling(whichCar) {
+    var carTrackCol = Math.floor(whichCar.x / trackWidth);
+    var carTrackRow = Math.floor(whichCar.y / trackHeight);
     var trackIndexUnderCar = rowColToArrayIndex(carTrackCol, carTrackRow);
-    //if ( (trackIndexUnderCar >= 0) &&
-    //	  (trackIndexUnderCar < trackColumns * trackRows) ) {
     if ((carTrackCol >= 0) &&
 	(carTrackCol < trackColumns) &&
 	(carTrackRow >= 0) &&
 	(carTrackRow < trackRows)) {
 	if (isObstacleAtColRow(carTrackCol, carTrackRow)) {
 	    // lose speed on collision with wall
-	    carX -= Math.cos(carAng) * carSpeed;
-	    carY -= Math.sin(carAng) * carSpeed;
-	    carSpeed *= -0.5;
+	    whichCar.x -= Math.cos(whichCar.ang) * whichCar.speed;
+	    whichCar.y -= Math.sin(whichCar.ang) * whichCar.speed;
+	    whichCar.speed *= -0.5;
 	}
     }
 }
