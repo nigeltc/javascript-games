@@ -56,7 +56,7 @@ function updateMousePos(evt) {
 }
 
 function setupInput() {
-    console.log("setupInput()");
+    //console.log("setupInput()");
     canvas.addEventListener("mousemove", updateMousePos);
     document.addEventListener("keydown", keyPressed);
     document.addEventListener("keyup", keyReleased);

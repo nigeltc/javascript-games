@@ -11,6 +11,7 @@ function Car() {
     this.ang = 0;
     this.speed = 0;
     this.img;
+    this.name = "Unknown Car";
 
     this.keyHeldGas = false;
     this.keyHeldReverse = false;
@@ -29,13 +30,15 @@ function Car() {
 	this.controlKeyLeft = leftKey;
     }
     
-    this.reset = function(whichImage) {
+    this.reset = function(whichImage, carName) {
 	this.img = whichImage;
+	this.name = carName;
+	this.speed = 0;
 	for(var j=0; j<trackRows; j++) {
 	    for(var i=0; i<trackColumns; i++) {
 		var idx = rowColToArrayIndex(i, j);
 		if ( trackGrid[idx] == TRACK_PLAYER_START ) {
-		    console.log("row=" + j + ", col=" + i);
+		    //console.log("row=" + j + ", col=" + i);
 		    trackGrid[idx] = TRACK_ROAD;
 		    this.ang = - Math.PI/2;
 		    this.x = (i * trackWidth) + (trackWidth / 2);
